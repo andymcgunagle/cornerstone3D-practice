@@ -19,14 +19,21 @@ const volumeId = "myVolume";
 
 registerWebImageLoader(imageLoader);
 
+metaData.addProvider(
+  (type, imageId) => hardcodedMetaDataProvider(type, imageId, imageIds),
+  10000
+);
+
+/** 
+ * @description Basic working example of cornerstone3D with React using a stripped down version of the webLoader example linked below. Their initDemo function seemed to be the key to getting this working.
+ * @link https://github.com/cornerstonejs/cornerstone3D/blob/main/packages/core/examples/webLoader/index.ts
+ * @link https://github.com/cornerstonejs/cornerstone3D/blob/main/utils/demo/helpers/initDemo.js
+ */
 async function run(container: HTMLDivElement) {
   try {
-    await initDemo();
+    const { initializationResult } = await initDemo();
 
-    metaData.addProvider(
-      (type, imageId) => hardcodedMetaDataProvider(type, imageId, imageIds),
-      10000
-    );
+    if (!initializationResult) throw new Error("Initialization failed");
 
     const renderingEngine = new RenderingEngine(renderingEngineId);
 

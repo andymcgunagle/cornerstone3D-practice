@@ -15,7 +15,9 @@ export async function initDemo() {
 
   initVolumeLoader();
 
-  await initCore();
-
   await initTools();
+
+  const initializationResult = await initCore();
+
+  return { initializationResult };
 }
