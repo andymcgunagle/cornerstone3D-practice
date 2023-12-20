@@ -1,117 +1,118 @@
-import * as cornerstone from '@cornerstonejs/core';
-const canvas = document.createElement('canvas');
-let lastImageIdDrawn;
+import * as cornerstone from "@cornerstonejs/core";
+import { IImage, ImageLoaderFn } from "@cornerstonejs/core/dist/types/types";
 
-// Todo: this loader should exist in a separate package in the same monorepo
+const canvas: HTMLCanvasElement = document.createElement("canvas");
+
+let lastImageIdDrawn: string | undefined;
+
+// The legacy cornerstoneWebImageLoader references the code for this web image loader.
+// I've refactored it a bit - mostly organization and types without changing the logic.
+// Reference in legacy package: https://github.com/cornerstonejs/cornerstoneWebImageLoader?tab=readme-ov-file#cornerstone-web-image-loader
+// New code: https://github.com/cornerstonejs/cornerstone3D/blob/main/packages/core/examples/webLoader/registerWebImageLoader.ts
 
 /**
- * creates a cornerstone Image object for the specified Image and imageId
- *
+ * @description Creates a cornerstone Image object for the specified Image and imageId.
  * @param image - An Image
  * @param imageId - the imageId for this image
  * @returns Cornerstone Image Object
  */
-function createImage(image, imageId) {
-  // extract the attributes we need
-  const rows = image.naturalHeight;
-  const columns = image.naturalWidth;
+function createImage(image: HTMLImageElement, imageId: string): IImage {
 
-  function getPixelData(targetBuffer) {
+  function getPixelData() {
     const imageData = getImageData();
 
-    let targetArray;
+    const targetArray = new Uint8Array((imageData?.width ?? 0) * (imageData?.height ?? 0) * 3);
 
-    // Check if targetBuffer is provided for volume viewports
-    if (targetBuffer) {
-      targetArray = new Uint8Array(
-        targetBuffer.arrayBuffer,
-        targetBuffer.offset,
-        targetBuffer.length
-      );
-    } else {
-      targetArray = new Uint8Array(imageData.width * imageData.height * 3);
+    if (imageData) {
+      for (let i = 0, j = 0; i < imageData?.data.length; i += 4, j += 3) {
+        targetArray[j] = imageData.data[i];
+        targetArray[j + 1] = imageData.data[i + 1];
+        targetArray[j + 2] = imageData.data[i + 2];
+      }
     }
-
-    // modify original image data and remove alpha channel (RGBA to RGB)
-    convertImageDataToRGB(imageData, targetArray);
 
     return targetArray;
   }
 
-  function convertImageDataToRGB(imageData, targetArray) {
-    for (let i = 0, j = 0; i < imageData.data.length; i += 4, j += 3) {
-      targetArray[j] = imageData.data[i];
-      targetArray[j + 1] = imageData.data[i + 1];
-      targetArray[j + 2] = imageData.data[i + 2];
-    }
-  }
-
   function getImageData() {
-    let context;
+    let context: CanvasRenderingContext2D | null = null;
 
     if (lastImageIdDrawn === imageId) {
-      context = canvas.getContext('2d');
+      context = canvas.getContext("2d");
     } else {
       canvas.height = image.naturalHeight;
+
       canvas.width = image.naturalWidth;
-      context = canvas.getContext('2d');
-      context.drawImage(image, 0, 0);
+
+      context = canvas.getContext("2d");
+
+      context?.drawImage(image, 0, 0);
+
       lastImageIdDrawn = imageId;
     }
 
-    return context.getImageData(0, 0, image.naturalWidth, image.naturalHeight);
+    return context?.getImageData(0, 0, image.naturalWidth, image.naturalHeight);
   }
 
   function getCanvas() {
-    if (lastImageIdDrawn === imageId) {
-      return canvas;
-    }
+    if (lastImageIdDrawn === imageId) return canvas;
 
     canvas.height = image.naturalHeight;
-    canvas.width = image.naturalWidth;
-    const context = canvas.getContext('2d');
 
-    context.drawImage(image, 0, 0);
+    canvas.width = image.naturalWidth;
+
+    const context = canvas.getContext("2d");
+
+    context?.drawImage(image, 0, 0);
+
     lastImageIdDrawn = imageId;
 
     return canvas;
   }
 
+  const rows = image.naturalHeight;
+  const columns = image.naturalWidth;
+
   // Extract the various attributes we need
   return {
+    color: true,
+    columnPixelSpacing: 1, // For web it's always 1
+    columns,
+    getCanvas,
+    getPixelData,
+    height: rows,
     imageId,
-    minPixelValue: 0,
-    maxPixelValue: 255,
-    slope: 1,
     intercept: 0,
+    invert: false,
+    maxPixelValue: 255,
+    minPixelValue: 0,
+    numComps: 3, // Don't understand this property, but 3 is the only number that seems to work...
+    rgba: false, // We converted the canvas rgba already to rgb above
+    rowPixelSpacing: 1, // For web it's always 1
+    rows,
+    sizeInBytes: rows * columns * 3,
+    slope: 1,
+    voiLUTFunction: "LINEAR", // Not 100% this is correct, but it works...
+    width: columns,
     windowCenter: 128,
     windowWidth: 255,
-    getPixelData,
-    getCanvas,
-    getImage: () => image,
-    rows,
-    columns,
-    height: rows,
-    width: columns,
-    color: true,
-    // we converted the canvas rgba already to rgb above
-    rgba: false,
-    columnPixelSpacing: 1, // for web it's always 1
-    rowPixelSpacing: 1, // for web it's always 1
-    invert: false,
-    sizeInBytes: rows * columns * 3,
   };
 }
 
-function arrayBufferToImage(arrayBuffer) {
+function arrayBufferToImage(arrayBuffer: ArrayBuffer): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const image = new Image();
+
     const arrayBufferView = new Uint8Array(arrayBuffer);
+
     const blob = new Blob([arrayBufferView]);
+
     const urlCreator = window.URL || window.webkitURL;
+
     const imageUrl = urlCreator.createObjectURL(blob);
 
     image.src = imageUrl;
+
     image.onload = () => {
       resolve(image);
       urlCreator.revokeObjectURL(imageUrl);
@@ -124,25 +125,23 @@ function arrayBufferToImage(arrayBuffer) {
   });
 }
 
-//
-// This is a cornerstone image loader for web images such as PNG and JPEG
-//
 const options = {
-  // callback allowing customization of the xhr (e.g. adding custom auth headers, cors, etc)
-  beforeSend: (xhr) => {
-    // xhr
+  beforeSend: (xhr: XMLHttpRequest) => {
+    console.log("beforeSend:", xhr);
   },
-};
+} as const;
 
 // Loads an image given a url to an image
-function loadImage(uri, imageId) {
+function loadImage(uri: string, imageId: string) {
   const xhr = new XMLHttpRequest();
 
-  xhr.open('GET', uri, true);
-  xhr.responseType = 'arraybuffer';
+  xhr.open("GET", uri, true);
+
+  xhr.responseType = "arraybuffer";
+
   options.beforeSend(xhr);
 
-  xhr.onprogress = function (oProgress) {
+  xhr.onprogress = (oProgress) => {
     if (oProgress.lengthComputable) {
       // evt.loaded the bytes browser receive
       // evt.total the total bytes set by the header
@@ -150,97 +149,82 @@ function loadImage(uri, imageId) {
       const total = oProgress.total;
       const percentComplete = Math.round((loaded / total) * 100);
 
-      const eventDetail = {
-        imageId,
-        loaded,
-        total,
-        percentComplete,
-      };
-
       cornerstone.triggerEvent(
         cornerstone.eventTarget,
-        'cornerstoneimageloadprogress',
-        eventDetail
+        "cornerstoneimageloadprogress",
+        {
+          imageId,
+          loaded,
+          percentComplete,
+          total,
+        }
       );
     }
   };
 
-  const promise = new Promise((resolve, reject) => {
-    xhr.onload = function () {
-      const imagePromise = arrayBufferToImage(this.response);
+  const promise = new Promise<IImage>((resolve, reject) => {
+    xhr.onload = async () => {
+      try {
+        const image = await arrayBufferToImage(xhr.response);
 
-      imagePromise
-        .then((image) => {
-          const imageObject = createImage(image, imageId);
+        const imageObject = createImage(image, imageId);
 
-          resolve(imageObject);
-        }, reject)
-        .catch((error) => {
-          console.error(error);
-        });
+        resolve(imageObject);
+      } catch (error) {
+        console.error(error);
+      }
     };
-    xhr.onerror = function (error) {
+
+    xhr.onerror = (error) => {
       reject(error);
     };
 
     xhr.send();
   });
 
-  const cancelFn = () => {
-    xhr.abort();
-  };
-
   return {
     promise,
-    cancelFn,
+    cancelFn: () => {
+      xhr.abort();
+    },
   };
-}
-
-export function registerWebImageLoader(imageLoader): void {
-  imageLoader.registerImageLoader('web', _loadImageIntoBuffer);
 }
 
 /**
  * Small stripped down loader from cornerstoneDICOMImageLoader
  * Which doesn't create cornerstone images that we don't need
  */
-function _loadImageIntoBuffer(
-  imageId: string,
-  options?: Record<string, any>
-): { promise: Promise<Record<string, any>>; cancelFn: () => void; } {
-  const uri = imageId.replace('web:', '');
+export const webImageLoaderFn: ImageLoaderFn = (
+  imageId,
+  options
+) => {
 
-  const promise = new Promise((resolve, reject) => {
-    // get the pixel data from the server
-    loadImage(uri, imageId)
-      .promise.then(
-        (image) => {
+  const uri = imageId.replace("web:", "");
+
+  return {
+    promise: new Promise<any>((resolve, reject) => {
+      // Get the pixel data from the server
+      loadImage(uri, imageId)
+        .promise.then((image) => {
           if (
-            !options ||
-            !options.targetBuffer ||
-            !options.targetBuffer.length ||
-            !options.targetBuffer.offset
+            !options
+            || !options.targetBuffer
+            || !options.targetBuffer.length
+            || !options.targetBuffer.offset
           ) {
             resolve(image);
             return;
           }
 
-          // @ts-ignore
-          image.getPixelData(options.targetBuffer);
+          image.getPixelData();
 
           resolve(true);
-        },
-        (error) => {
+        }, (error) => {
           reject(error);
-        }
-      )
-      .catch((error) => {
-        reject(error);
-      });
-  });
-
-  return {
-    promise,
+        }).catch((error) => {
+          reject(error);
+        });
+    }),
     cancelFn: undefined,
   };
-}
+};

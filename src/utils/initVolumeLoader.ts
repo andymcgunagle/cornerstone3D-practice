@@ -1,19 +1,21 @@
-import { volumeLoader } from '@cornerstonejs/core';
+import { volumeLoader } from "@cornerstonejs/core";
 import {
   cornerstoneStreamingImageVolumeLoader,
   cornerstoneStreamingDynamicImageVolumeLoader,
-} from '@cornerstonejs/streaming-image-volume-loader';
+} from "@cornerstonejs/streaming-image-volume-loader";
 
 export default function initVolumeLoader() {
   volumeLoader.registerUnknownVolumeLoader(
-    cornerstoneStreamingImageVolumeLoader
+    cornerstoneStreamingImageVolumeLoader as any
   );
+
   volumeLoader.registerVolumeLoader(
-    'cornerstoneStreamingImageVolume',
-    cornerstoneStreamingImageVolumeLoader
+    "cornerstoneStreamingImageVolume",
+    cornerstoneStreamingImageVolumeLoader as any
   );
+
   volumeLoader.registerVolumeLoader(
-    'cornerstoneStreamingDynamicImageVolume',
-    cornerstoneStreamingDynamicImageVolumeLoader
+    "cornerstoneStreamingDynamicImageVolume",
+    cornerstoneStreamingDynamicImageVolumeLoader as any
   );
 }

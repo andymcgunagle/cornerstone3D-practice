@@ -8,16 +8,15 @@ import initVolumeLoader from "./initVolumeLoader";
 /** 
  * Grabbed this from https://github.com/cornerstonejs/cornerstone3D/blob/main/utils/demo/helpers/initDemo.js
  */
-export async function initDemo() {
-  initProviders();
-
-  initCornerstoneDICOMImageLoader();
-
+export async function initializeCornerstone() {
+  // Needed to display images
+  const initializationResult = await initCore();
   initVolumeLoader();
 
+  // Not needed to display images
+  initProviders();
+  initCornerstoneDICOMImageLoader();
   await initTools();
-
-  const initializationResult = await initCore();
 
   return { initializationResult };
 }

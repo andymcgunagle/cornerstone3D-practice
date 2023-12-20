@@ -1,16 +1,20 @@
-import dicomParser from 'dicom-parser';
-import * as cornerstone from '@cornerstonejs/core';
-import * as cornerstoneTools from '@cornerstonejs/tools';
-import cornerstoneDICOMImageLoader from '@cornerstonejs/dicom-image-loader';
+import * as cornerstone from "@cornerstonejs/core";
+import * as cornerstoneTools from "@cornerstonejs/tools";
+import cornerstoneDICOMImageLoader from "@cornerstonejs/dicom-image-loader";
+import dicomParser from "dicom-parser";
 
-window.cornerstone = cornerstone;
-window.cornerstoneTools = cornerstoneTools;
+(window as any).cornerstone = cornerstone;
+(window as any).cornerstoneTools = cornerstoneTools;
+
 const { preferSizeOverAccuracy, useNorm16Texture } =
   cornerstone.getConfiguration().rendering;
 
 export default function initCornerstoneDICOMImageLoader() {
+
   cornerstoneDICOMImageLoader.external.cornerstone = cornerstone;
+
   cornerstoneDICOMImageLoader.external.dicomParser = dicomParser;
+
   cornerstoneDICOMImageLoader.configure({
     useWebWorkers: true,
     decodeConfig: {
@@ -25,7 +29,7 @@ export default function initCornerstoneDICOMImageLoader() {
     maxWebWorkers = Math.min(navigator.hardwareConcurrency, 7);
   }
 
-  var config = {
+  cornerstoneDICOMImageLoader.webWorkerManager.initialize({
     maxWebWorkers,
     startWebWorkersOnDemand: false,
     taskConfiguration: {
@@ -34,7 +38,5 @@ export default function initCornerstoneDICOMImageLoader() {
         strict: false,
       },
     },
-  };
-
-  cornerstoneDICOMImageLoader.webWorkerManager.initialize(config);
+  });
 }
