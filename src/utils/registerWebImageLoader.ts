@@ -199,6 +199,7 @@ export const webImageLoaderFn: ImageLoaderFn = (
   options
 ) => {
 
+  // TODO: Replace "web:" with imageLoaderScheme constant
   const uri = imageId.replace("web:", "");
 
   return {
