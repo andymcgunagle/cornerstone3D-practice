@@ -1,14 +1,16 @@
 import * as cornerstone from "@cornerstonejs/core";
-import { IImage, ImageLoaderFn } from "@cornerstonejs/core/dist/types/types";
+import type { IImage, ImageLoaderFn } from "@cornerstonejs/core/types";
 
 const canvas: HTMLCanvasElement = document.createElement("canvas");
 
 let lastImageIdDrawn: string | undefined;
 
-// The legacy cornerstoneWebImageLoader references the code for this web image loader.
-// I've refactored it a bit - mostly organization and types without changing the logic.
-// Reference in legacy package: https://github.com/cornerstonejs/cornerstoneWebImageLoader?tab=readme-ov-file#cornerstone-web-image-loader
-// New code: https://github.com/cornerstonejs/cornerstone3D/blob/main/packages/core/examples/webLoader/registerWebImageLoader.ts
+/** 
+ * The legacy cornerstoneWebImageLoader references the code for this web image loader. I've refactored it a bit - mostly organization and types without changing the logic.
+ * - Reference in legacy package: https://github.com/cornerstonejs/cornerstoneWebImageLoader?tab=readme-ov-file#cornerstone-web-image-loader
+ * - New code: https://github.com/cornerstonejs/cornerstone3D/blob/main/packages/core/examples/webLoader/registerWebImageLoader.ts
+ */
+
 
 /**
  * @description Creates a cornerstone Image object for the specified Image and imageId.
@@ -73,11 +75,12 @@ function createImage(image: HTMLImageElement, imageId: string): IImage {
   const rows = image.naturalHeight;
   const columns = image.naturalWidth;
 
-  // Extract the various attributes we need
+  /** Extract the various attributes we need. */
   return {
     color: true,
     columnPixelSpacing: 1, // For web it's always 1
     columns,
+    dataType: "Uint8Array",
     getCanvas,
     getPixelData,
     height: rows,
@@ -86,7 +89,7 @@ function createImage(image: HTMLImageElement, imageId: string): IImage {
     invert: false,
     maxPixelValue: 255,
     minPixelValue: 0,
-    numComps: 3, // Don't understand this property, but 3 is the only number that seems to work...
+    numberOfComponents: 3,
     rgba: false, // We converted the canvas rgba already to rgb above
     rowPixelSpacing: 1, // For web it's always 1
     rows,
@@ -131,7 +134,7 @@ const options = {
   },
 } as const;
 
-// Loads an image given a url to an image
+/** Loads an image given a url to an image. */
 function loadImage(uri: string, imageId: string) {
   const xhr = new XMLHttpRequest();
 
@@ -190,36 +193,25 @@ function loadImage(uri: string, imageId: string) {
   };
 }
 
+export const webImageLoaderScheme = "web" as const;
+
 /**
- * Small stripped down loader from cornerstoneDICOMImageLoader
- * Which doesn't create cornerstone images that we don't need
+ * Small stripped down loader from cornerstoneDICOMImageLoader which doesn't create cornerstone images that we don't need.
  */
 export const webImageLoaderFn: ImageLoaderFn = (
   imageId,
   options
 ) => {
-
-  // TODO: Replace "web:" with imageLoaderScheme constant
-  const uri = imageId.replace("web:", "");
+  const uri = imageId.replace(`${webImageLoaderScheme}:`, "");
 
   return {
     promise: new Promise<any>((resolve, reject) => {
-      // Get the pixel data from the server
+      /** Get the pixel data from the server. */
       loadImage(uri, imageId)
         .promise.then((image) => {
-          if (
-            !options
-            || !options.targetBuffer
-            || !options.targetBuffer.length
-            || !options.targetBuffer.offset
-          ) {
-            resolve(image);
-            return;
-          }
+          // image.getPixelData();
+          resolve(image);
 
-          image.getPixelData();
-
-          resolve(true);
         }, (error) => {
           reject(error);
         }).catch((error) => {

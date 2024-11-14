@@ -10,16 +10,23 @@ import {
 
 import { hardcodedMetaDataProvider } from "./utils/hardcodedMetaDataProvider";
 import { initializeCornerstone } from "./utils/initializeCornerstone";
-import { webImageLoaderFn } from "./utils/registerWebImageLoader";
+import { webImageLoaderFn, webImageLoaderScheme } from "./utils/registerWebImageLoader";
 
-const imageLoaderScheme = "web" as const;
 const containerId = "myContainer" as const;
+
+/** The maximum image size for the placehold API is 4000 x 4000 px and the minimum image size is 10 x 10 px. */
+const placeholderImageDimensions = 500;
+
+console.log({ placeholderImageDimensions });
+
+/** Supported formats for the placehold API are svg, png, jpeg, gif and webp. */
+const placeholderImage = `https://placehold.co/${placeholderImageDimensions}/png`;
 
 /** 
  * @description You can use registerImageLoader to make an external image loader available to the cornerstone library. This function accept a scheme which the image loader function (second argument) should act on.
  * @link https://www.cornerstonejs.org/docs/concepts/cornerstone-core/imageLoader#register-image-loader
  */
-imageLoader.registerImageLoader(imageLoaderScheme, webImageLoaderFn);
+imageLoader.registerImageLoader(webImageLoaderScheme, webImageLoaderFn);
 
 async function renderViewportWithWebImage({
   container,
@@ -73,7 +80,7 @@ async function renderViewportWithWebImage({
  */
 export default function App() {
   const [isInitialized, setIsInitialized] = useState(false);
-  const [imageUrl, setImageUrl] = useState<string>(`${imageLoaderScheme}:https://picsum.photos/500`);
+  const [imageUrl, setImageUrl] = useState<string>(`${webImageLoaderScheme}:${placeholderImage}`);
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -118,8 +125,8 @@ export default function App() {
       id={containerId}
       ref={containerRef}
       style={{
-        height: "500px",
-        width: "500px",
+        height: `${placeholderImageDimensions}px`,
+        width: `${placeholderImageDimensions}px`,
       }}
     />
   );

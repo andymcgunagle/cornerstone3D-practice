@@ -6,7 +6,7 @@ import dicomParser from "dicom-parser";
 (window as any).cornerstone = cornerstone;
 (window as any).cornerstoneTools = cornerstoneTools;
 
-const { preferSizeOverAccuracy, useNorm16Texture } =
+const { preferSizeOverAccuracy } =
   cornerstone.getConfiguration().rendering;
 
 export default function initCornerstoneDICOMImageLoader() {
@@ -19,7 +19,7 @@ export default function initCornerstoneDICOMImageLoader() {
     useWebWorkers: true,
     decodeConfig: {
       convertFloatPixelDataToInt: false,
-      use16BitDataType: preferSizeOverAccuracy || useNorm16Texture,
+      use16BitDataType: preferSizeOverAccuracy,
     },
   });
 

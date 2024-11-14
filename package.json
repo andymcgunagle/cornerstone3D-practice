@@ -11,10 +11,10 @@
     "ts:watch": "tsc --watch --noEmit --incremental"
   },
   "dependencies": {
-    "@cornerstonejs/core": "^1.41.0",
-    "@cornerstonejs/dicom-image-loader": "^1.41.0",
+    "@cornerstonejs/core": "^2.1.19",
+    "@cornerstonejs/dicom-image-loader": "^2.1.19",
     "@cornerstonejs/streaming-image-volume-loader": "^1.41.0",
-    "@cornerstonejs/tools": "^1.41.0",
+    "@cornerstonejs/tools": "^2.1.19",
     "cornerstone-web-image-loader": "^2.1.1",
     "dicom-parser": "^1.8.21",
     "react": "^18.2.0",
