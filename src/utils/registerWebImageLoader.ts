@@ -11,7 +11,6 @@ let lastImageIdDrawn: string | undefined;
  * - New code: https://github.com/cornerstonejs/cornerstone3D/blob/main/packages/core/examples/webLoader/registerWebImageLoader.ts
  */
 
-
 /**
  * @description Creates a cornerstone Image object for the specified Image and imageId.
  * @param image - An Image
@@ -130,7 +129,7 @@ function arrayBufferToImage(arrayBuffer: ArrayBuffer): Promise<HTMLImageElement>
 
 const options = {
   beforeSend: (xhr: XMLHttpRequest) => {
-    console.log("beforeSend:", xhr);
+    console.info("beforeSend:", xhr);
   },
 } as const;
 
@@ -193,21 +192,23 @@ function loadImage(uri: string, imageId: string) {
   };
 }
 
-export const webImageLoaderScheme = "web" as const;
+export const webImageLoaderSchemeName = "web" as const;
+
+export const webImageLoaderSchemeDelimiter = ":" as const;
+
+export const webImageLoaderSchemeWithDelimiter = `${webImageLoaderSchemeName}${webImageLoaderSchemeDelimiter}` as const;
 
 /**
- * Small stripped down loader from cornerstoneDICOMImageLoader which doesn't create cornerstone images that we don't need.
+ * Small stripped down loader from cornerstoneDICOMImageLoader which doesn't create cornerstone images we don't need.
  */
 export const webImageLoaderFn: ImageLoaderFn = (
   imageId,
   options
 ) => {
-  const uri = imageId.replace(`${webImageLoaderScheme}:`, "");
-
   return {
     promise: new Promise<any>((resolve, reject) => {
       /** Get the pixel data from the server. */
-      loadImage(uri, imageId)
+      loadImage(imageId.replace(`${webImageLoaderSchemeWithDelimiter}`, ""), imageId)
         .promise.then((image) => {
           // image.getPixelData();
           resolve(image);

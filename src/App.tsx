@@ -6,18 +6,16 @@ import {
   imageLoader,
   metaData,
   volumeLoader,
+  init,
 } from "@cornerstonejs/core";
 
 import { hardcodedMetaDataProvider } from "./utils/hardcodedMetaDataProvider";
-import { initializeCornerstone } from "./utils/initializeCornerstone";
-import { webImageLoaderFn, webImageLoaderScheme } from "./utils/registerWebImageLoader";
+import { webImageLoaderFn, webImageLoaderSchemeName, webImageLoaderSchemeWithDelimiter } from "./utils/registerWebImageLoader";
 
 const containerId = "myContainer" as const;
 
 /** The maximum image size for the placehold API is 4000 x 4000 px and the minimum image size is 10 x 10 px. */
 const placeholderImageDimensions = 500;
-
-console.log({ placeholderImageDimensions });
 
 /** Supported formats for the placehold API are svg, png, jpeg, gif and webp. */
 const placeholderImage = `https://placehold.co/${placeholderImageDimensions}/png`;
@@ -26,7 +24,7 @@ const placeholderImage = `https://placehold.co/${placeholderImageDimensions}/png
  * @description You can use registerImageLoader to make an external image loader available to the cornerstone library. This function accept a scheme which the image loader function (second argument) should act on.
  * @link https://www.cornerstonejs.org/docs/concepts/cornerstone-core/imageLoader#register-image-loader
  */
-imageLoader.registerImageLoader(webImageLoaderScheme, webImageLoaderFn);
+imageLoader.registerImageLoader(webImageLoaderSchemeName, webImageLoaderFn);
 
 async function renderViewportWithWebImage({
   container,
@@ -80,14 +78,14 @@ async function renderViewportWithWebImage({
  */
 export default function App() {
   const [isInitialized, setIsInitialized] = useState(false);
-  const [imageUrl, setImageUrl] = useState<string>(`${webImageLoaderScheme}:${placeholderImage}`);
+  const [imageUrl, setImageUrl] = useState<string>(`${webImageLoaderSchemeWithDelimiter}${placeholderImage}`);
 
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     (async () => {
       try {
-        const { initializationResult } = await initializeCornerstone();
+        const initializationResult = init();
 
         if (!initializationResult) throw new Error("Cornerstone initialization failed");
 
